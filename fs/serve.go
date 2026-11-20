@@ -28,6 +28,9 @@ const (
 	entryValidTime = 1 * time.Minute
 )
 
+// ReadRequest.Respond writes synchronously; clear these buffers before reuse.
+var readResponseBuffers sync.Pool
+
 // TODO: FINISH DOCS
 
 // An FS is the interface required of a file system.
@@ -1375,7 +1378,17 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		}
 		handle := shandle.handle
 
-		s := &fuse.ReadResponse{Data: make([]byte, 0, r.Size)}
+		buf, _ := readResponseBuffers.Get().([]byte)
+		if cap(buf) < r.Size {
+			buf = make([]byte, 0, r.Size)
+		} else {
+			buf = buf[:r.Size]
+			for i := range buf {
+				buf[i] = 0
+			}
+		}
+		defer readResponseBuffers.Put(buf[:0])
+		s := &fuse.ReadResponse{Data: buf[:0]}
 		if r.Dir {
 			if h, ok := handle.(HandleReadDirAller); ok {
 				// detect rewinddir(3) or similar seek and refresh

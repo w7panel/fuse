@@ -1899,7 +1899,7 @@ func (d *readDirAllCached) Open(ctx context.Context, req *fuse.OpenRequest, resp
 
 var _ fs.HandleReadDirAller = (*readDirAllCached)(nil)
 
-func (d *readDirAllCached) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
+func (d *readDirAllCached) ReadDirAll(ctx context.Context, req *fuse.ReadRequest) ([]fuse.Dirent, error) {
 	d.readDirs.Inc()
 	return []fuse.Dirent{
 		{Name: "one", Inode: 11, Type: fuse.DT_Dir},
